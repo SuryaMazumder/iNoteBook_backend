@@ -12,6 +12,7 @@ router.get("/", (req, res) => {
   console.log(res);
 });
 
+//Creating user account
 router.post(
   "/save",
   [
@@ -52,7 +53,52 @@ router.post(
       });
     } catch (error) {
       console.error(error.message);
-      return res.status(500).json({ errors: "Unexpected error Occured" });
+      return res.status(500).json({ errors: "Internal server error" });
+    }
+  }
+);
+
+//authenticate user /login api
+
+router.post(
+  "/login",
+  [
+    body("email", "Enter a valid Email").isEmail(),
+    body("password", "Password cannot be blank").exists(),
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      console.log(errors);
+      return res.status(400).json({ errors: errors.array() });
+    }
+    const { email, password } = req.body;
+    try {
+      let user = await User.findOne({ email });
+      if (!user) {
+        return res
+          .status(400)
+          .json({ error: "Please try to login by correct credentials" });
+      }
+      const compPassword = await bcrypt.compare(password, user.password);
+      if (!compPassword) {
+        return res
+          .status(401)
+          .json({ error: "Please try to login by correct credentials" });
+      }
+      const data = {
+        id: user.id,
+      };
+      let authToken = jwt.sign(data, JWT_SECRET);
+
+      res.json({
+        authToken: authToken,
+        name: req.body.name,
+        email: req.body.email,
+      });
+    } catch (err) {
+      console.error(err.message);
+      return res.status(500).json({ errors: "Internal server error" });
     }
   }
 );
