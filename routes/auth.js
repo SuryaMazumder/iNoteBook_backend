@@ -7,7 +7,7 @@ const jwt = require("jsonwebtoken");
 const dotenv = require("dotenv");
 dotenv.config();
 const JWT_SECRET = process.env.JWT_SECRET;
-
+const fetchUser = require("../middleware/fetchuser");
 router.get("/", (req, res) => {
   console.log(res);
 });
@@ -102,5 +102,17 @@ router.post(
     }
   }
 );
+
+//get logged in User details
+router.post("/getUser", fetchUser, async (req, res) => {
+  try {
+    userId = req.id;
+    const user = await User.findById(userId).select("-password");
+    res.status(200).send(user);
+  } catch (error) {
+    console.error(error.message);
+    return res.status(500).json({ errors: "Internal server error" });
+  }
+});
 
 module.exports = router;
