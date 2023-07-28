@@ -91,4 +91,24 @@ router.put(
     res.send(note);
   }
 );
+
+//deleting Notes
+router.delete("/deleteNote/:id", fetchUser, async (req, res) => {
+  let note = await Notes.findById({ _id: req.params.id });
+  if (!note) {
+    return res.status(401).send("Not found");
+  }
+  if (note.user.toString() !== req.id) {
+    return res.status(401).send("Not Allowed");
+  }
+  try {
+    note = await Notes.findByIdAndDelete(req.params.id);
+    res.status(200).json({
+      message: "Note Deleted!",
+    });
+  } catch (error) {
+    console.error(error.message);
+    return res.status(500).json({ errors: "Failed to delete" });
+  }
+});
 module.exports = router;
